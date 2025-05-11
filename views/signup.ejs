@@ -1,0 +1,26 @@
+<%- include("templates/header") %>
+    <div class="m-1 p-2">
+        <h1>Create an account</h1>
+    </div>
+    <form action="/submitUser" method="post" class="align-items-center">
+        <div class="form-group m-3">
+            <div>
+            <label>Username</label>
+            </div>
+            <input name="username" type="text" placeholder="username" class="control-label col-sm-2">
+        </div>
+        <div class="form-group m-3">
+            <div>
+            <label class="control-label col-sm-2">Email</label>
+            </div>
+            <input name="email" type="email" class="control-label col-sm-2">
+        </div>
+        <div class="form-group m-3">
+            <div>
+            <label class="control-label col-sm-2">Password</label>
+            </div>
+            <input name="password" type="password" placeholder="password" class="control-label col-sm-2">
+        </div>
+        <button type="submit" class="btn btn-primary ms-3">Submit</button>
+    </form>
+<%- include("templates/footer") %>

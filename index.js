@@ -54,15 +54,7 @@ app.use(session({
 ));
 
 app.get('/', (req, res) => {
-    var html = `
-        <form action='/signup'>
-            <button>Sign up</button>
-        </form>
-        <form action='/login'>
-            <button>Log in</button>
-        </form>`
-
-    res.send(html);
+    res.render("index");
 });
 
 app.get('/nosql-injection', async (req, res) => {
@@ -96,15 +88,7 @@ app.get('/about', (req, res) => {
 });
 
 app.get('/signup', (req, res) => {
-    var html = `
-    <h1>Create User</h1>
-        <form action='/submitUser' method='post'>
-            <input name='username' type='text' placeholder='username'></input>
-            <br><input name='email' type='text' placeholder='email'></input>
-            <br><input name='password' type='password' placeholder='password'></input>
-            <br><button>Submit</button>  
-        </form>`;
-    res.send(html);
+    res.render("signup")
 });
 
 app.post('/submitUser', async (req, res) => {
@@ -159,17 +143,7 @@ app.post('/submitUser', async (req, res) => {
 });
 
 app.get('/login', (req, res) => {
-    var html = `
-        <form action='/loggingin' method='post'>
-            <input name='username' type='text' placeholder='username'></input>
-            <br><input name='password' type='password' placeholder='password'></input>
-            <br><button>Submit</button>
-        </form>
-        <form action='/signup'>
-            <button>Sign Up</button>
-        </form>`
-
-    res.send(html);
+   res.render("login");
 });
 
 app.post('/loggingin', async (req, res) => {
