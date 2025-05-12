@@ -1,0 +1,14 @@
+<%- include("templates/header") %>
+<div class="container">
+    <h2>User List</h2>
+    <ol>
+        <% users.forEach(user => { %>
+            <%- include("templates/users", { 
+                users: user,
+                currentUser: currentUser 
+            }); %>
+        <% }); %>
+    </ol>
+    <a href="/members" class="btn btn-primary">Back to Members</a>
+</div>
+<%- include("templates/footer") %>

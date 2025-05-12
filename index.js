@@ -53,6 +53,40 @@ app.use(session({
 }
 ));
 
+function isValidSession(req) {
+    if (req.session.authenticated) {
+        return true;
+    }
+    return false;
+}
+
+function sessionValidation(req, res, next) {
+    if (isValidSession(req)) {
+        next();
+    }
+    else {
+        res.redirect('/login');
+    }
+}
+
+function isAdmin(req) {
+    if (req.session.user_type == 'admin') {
+        return true;
+    }
+    return false;
+}
+
+function adminAuthorization(req, res, next) {
+    if (!isAdmin(req)) {
+        res.status(403);
+        res.render("errorMessage", { error: "Not Authorized" });
+        return;
+    }
+    else {
+        next();
+    }
+}
+
 app.get('/', (req, res) => {
     res.render("index");
 });
@@ -92,58 +126,55 @@ app.get('/signup', (req, res) => {
 });
 
 app.post('/submitUser', async (req, res) => {
-    var username = req.body.username;
-    var email = req.body.email;
-    var password = req.body.password;
+    const { username, email, password } = req.body;
 
-    const schema = Joi.object(
-        {
-            username: Joi.string().alphanum().max(20).required(),
-            email: Joi.string().max(30).required(),
-            password: Joi.string().max(20).required()
-        });
+    // Improved validation schema
+    const schema = Joi.object({
+        username: Joi.string().pattern(/^[a-zA-Z0-9 ]+$/).max(20).required(),
+        email: Joi.string().email().max(30).required(),
+        password: Joi.string().min(6).max(20).required()
+    });
 
     const validationResult = schema.validate({ username, email, password });
-    if (validationResult.error != null) {
-        console.log(validationResult.error);
-        var html = `
-            <h1>${validationResult.error.details[0].message}</h1>
-            <a href='/signup'>Try again</a>`;
-        res.send(html);
-        return;
+    if (validationResult.error) {
+        return res.render("validationError", { 
+            error: validationResult.error.details[0].message 
+        });
     }
 
+    // Check for existing user
     const existingUser = await userCollection.findOne({
-        $or: [{ username: username }, { email: email }]
+        $or: [{ username }, { email }]
     });
 
     if (existingUser) {
-        var html = `<h1>Username or email already exists. Please try again.</h1>
-            <a href='/signup'>Try again</a>`;
-
-        res.send(html);
-        return;
+        return res.render("signup", { 
+            error: "Username or email already exists" 
+        });
     }
 
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
 
+    // Insert new user with type
+    await userCollection.insertOne({ 
+        username, 
+        email, 
+        password: hashedPassword,
+        user_type: 'user'
+    });
 
-
-    var hashedPassword = await bcrypt.hash(password, saltRounds);
-
-    await userCollection.insertOne({ username: username, email: email, password: hashedPassword });
-    console.log("Inserted user");
-    console.log("successfully created user");
-
-
+    // Initialize session properly
     req.session.authenticated = true;
     req.session.username = username;
+    req.session.user_type = 'user';
     req.session.cookie.maxAge = expireTime;
 
     res.redirect('/members');
 });
 
 app.get('/login', (req, res) => {
-   res.render("login");
+    res.render("login");
 });
 
 app.post('/loggingin', async (req, res) => {
@@ -154,37 +185,38 @@ app.post('/loggingin', async (req, res) => {
     const validationResult = schema.validate(username);
     if (validationResult.error != null) {
         console.log(validationResult.error);
-        res.redirect("/login");
+        res.render("login");
         return;
     }
 
-    const result = await userCollection.find({ username: username }).project({ username: 1, password: 1, _id: 1 }).toArray();
+    const result = await userCollection.find({ username: username }).project({ username: 1, password: 1, _id: 1, user_type: 1 }).toArray();
 
     console.log(result);
     if (result.length != 1) {
         console.log("user not found");
-        res.redirect("/loginfail");
+        res.render("loginfail");
         return;
     }
     if (await bcrypt.compare(password, result[0].password)) {
         console.log("correct password");
         req.session.authenticated = true;
         req.session.username = username;
+        req.session.user_type = result[0].user_type;
         req.session.cookie.maxAge = expireTime;
 
-        res.redirect("/loggedin");
+        res.render("loggedin", {username: username});
         return;
     }
     else {
         console.log("incorrect password");
-        res.redirect("/loginfail");
+        res.render("loginfail");
         return;
     }
 
 });
 
 app.get('/loginfail', (req, res) => {
-    res.send('<h1>login/password combination not valid</h1> <a href="/login">Try again</a>');
+    res.render("loginfail");
 
 });
 
@@ -195,68 +227,74 @@ app.get('/loggedin', (req, res) => {
     } else {
 
         const username = req.session.username;
-
-        var html = `
-            <h1>Hello, ${username}</h1>
-            <form action='/members'>
-                <button>Go to members area</button>
-            </form>
-            <form action='/logout'>
-                <button>Logout</button>
-            </form>`;
-
-        res.send(html);
-
-
+        res.render("loggedin", { username: username });
     }
 
 });
 
-const catimage = () => {
-    const num = Math.floor(Math.random() * 3);
-    if (num == 1) {
-        return '/cat-maxwell.gif';
-    } else if (num == 2) {
-        return 'giphy.gif';
-    } else {
-        return 'spore-get-away.gif'
-    }
-};
 
 app.get('/members', (req, res) => {
     if (!req.session.authenticated) {
         console.log("user is not authenticated");
-        res.redirect('/');
+        res.render("index");
         return;
     }
 
     const username = req.session.username;
 
-    const html = `
-        <h1>Hello, ${username}</h1>
-        <img src="${catimage()}" style="width:250px"></img>
-        <form action='/logout'>
-            <button>Sign out</button>
-        </form>
-        `;
+    res.render("members", { username: username });
 
-    res.send(html);
 });
+
+app.get('/admin', sessionValidation, adminAuthorization, async (req, res) => {
+    const users = await userCollection.find().project({ username: 1, _id: 1, user_type: 1 }).toArray();
+
+    res.render("admin", { 
+        users: users,
+        currentUser: req.session.username
+    });
+});
+
+app.post('/promote-user', sessionValidation, adminAuthorization, async (req, res) => {
+    const username = req.body.username;
+    await userCollection.updateOne(
+        { username: username },
+        { $set: {user_type: 'admin' }}
+    );
+    res.redirect('/admin')
+});
+
+app.post('/demote-user', sessionValidation, adminAuthorization, async (req, res) => {
+    const username = req.body.username;
+    await userCollection.updateOne(
+        { username: username },
+        {$set: {user_type: 'user'}}
+    );
+    res.redirect('/admin');
+})
+
 
 app.get('/logout', (req, res) => {
     req.session.destroy();
-    res.redirect('/');
+    res.render("index");
 });
 
 //WHile using express v5, use this 
 app.get('*dummy', (req, res) => {
     res.status(404);
-    res.send("404 - No page exists!")
+    res.render("404");
 });
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
 });
+
+// const adminButton = document.getElementById('promoteAdmin');
+// const userButton = document.getElementById('promoteUser');
+
+// adminButton.addEventListener("click", function() {
+
+// }
 
 
 

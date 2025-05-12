@@ -1,0 +1,26 @@
+<%- include("templates/header") %>
+
+    <h1>Welcome, <%= username %></h1>
+
+    <div class="container-fluid">
+        <div class="row">  
+            <div class="col-sm-4 mb-3">  
+                <div class="card h-100">
+                    <img src="/cat-maxwell.gif" class="card-img-top" alt="maxwellcat">
+                </div>
+            </div>
+            <div class="col-sm-4 mb-3">
+                <div class="card h-100">
+                    <img src="giphy.gif" class="card-img-top" alt="giphycat">
+                </div>
+            </div>
+            <div class="col-sm-4 mb-3">
+                <div class="card h-100">
+                    <img src="/spore-get-away.gif" class="card-img-top" alt="sporecat">
+                </div>
+            </div>
+        </div>
+    </div>
+    <a class="btn btn-danger m-3" href="/logout">Log out</a>
+
+<%- include("templates/footer") %>

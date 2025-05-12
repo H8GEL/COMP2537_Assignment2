@@ -1,0 +1,14 @@
+<li class="mb-2">
+    <%= users.username %> (<%= users.user_type || 'user' %>)
+    
+    <% if (users.username !== currentUser) { %>
+        <form action="/promote-user" method="POST" style="display: inline;">
+            <input type="hidden" name="username" value="<%= users.username %>">
+            <button class="btn btn-sm btn-success m-1">Promote</button>
+        </form>
+        <form action="/demote-user" method="POST" style="display: inline;">
+            <input type="hidden" name="username" value="<%= users.username %>">
+            <button class="btn btn-sm btn-danger m-1">Demote</button>
+        </form>
+    <% } %>
+</li>
