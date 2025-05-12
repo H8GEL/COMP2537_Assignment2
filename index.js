@@ -289,13 +289,6 @@ app.listen(port, () => {
     console.log(`Example app listening on port ${port}`);
 });
 
-// const adminButton = document.getElementById('promoteAdmin');
-// const userButton = document.getElementById('promoteUser');
-
-// adminButton.addEventListener("click", function() {
-
-// }
-
 
 
 
