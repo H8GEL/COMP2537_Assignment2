@@ -137,8 +137,8 @@ app.post('/submitUser', async (req, res) => {
 
     const validationResult = schema.validate({ username, email, password });
     if (validationResult.error) {
-        return res.render("validationError", { 
-            error: validationResult.error.details[0].message 
+        return res.render("validationError", {
+            error: validationResult.error.details[0].message
         });
     }
 
@@ -148,8 +148,8 @@ app.post('/submitUser', async (req, res) => {
     });
 
     if (existingUser) {
-        return res.render("signup", { 
-            error: "Username or email already exists" 
+        return res.render("signup", {
+            error: "Username or email already exists"
         });
     }
 
@@ -157,9 +157,9 @@ app.post('/submitUser', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
     // Insert new user with type
-    await userCollection.insertOne({ 
-        username, 
-        email, 
+    await userCollection.insertOne({
+        username,
+        email,
         password: hashedPassword,
         user_type: 'user'
     });
@@ -204,7 +204,7 @@ app.post('/loggingin', async (req, res) => {
         req.session.user_type = result[0].user_type;
         req.session.cookie.maxAge = expireTime;
 
-        res.render("loggedin", {username: username});
+        res.render("loggedin", { username: username });
         return;
     }
     else {
@@ -249,7 +249,7 @@ app.get('/members', (req, res) => {
 app.get('/admin', sessionValidation, adminAuthorization, async (req, res) => {
     const users = await userCollection.find().project({ username: 1, _id: 1, user_type: 1 }).toArray();
 
-    res.render("admin", { 
+    res.render("admin", {
         users: users,
         currentUser: req.session.username
     });
@@ -259,7 +259,7 @@ app.post('/promote-user', sessionValidation, adminAuthorization, async (req, res
     const username = req.body.username;
     await userCollection.updateOne(
         { username: username },
-        { $set: {user_type: 'admin' }}
+        { $set: { user_type: 'admin' } }
     );
     res.redirect('/admin')
 });
@@ -268,7 +268,7 @@ app.post('/demote-user', sessionValidation, adminAuthorization, async (req, res)
     const username = req.body.username;
     await userCollection.updateOne(
         { username: username },
-        {$set: {user_type: 'user'}}
+        { $set: { user_type: 'user' } }
     );
     res.redirect('/admin');
 })
